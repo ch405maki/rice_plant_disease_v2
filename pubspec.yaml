@@ -1,0 +1,60 @@
+name: RicePlantDiseaseDetection
+description: Plant recogniser in Flutter using TensorFlow Lite
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^0.8.6
+  collection: ^1.16.0
+  image: ^3.2.2
+  tflite_flutter: ^0.9.0
+  tflite_flutter_helper:
+    git:
+      url: https://github.com/filofan1/tflite_flutter_helper.git
+      ref: 783f15e5a87126159147d8ea30b98eea9207ac70
+  cupertino_icons: ^1.0.2
+  animated_bottom_navigation_bar: ^0.3.3
+  page_transition: ^2.0.5
+  onboarding: ^3.1.0
+  flutter_onboarding: ^0.0.9
+  get:
+  shared_preferences: ^2.1.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.0.12
+  json_annotation: ^4.8.1
+  intl: ^0.18.1 
+  pdf: ^3.8.4
+  open_file: ^3.1.0
+
+dev_dependencies:
+  flutter_lints: ^2.0.1
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.6
+  hive_generator: ^2.0.0
+  
+
+flutter:
+  uses-material-design: true
+
+  fonts:  
+  - family: SquadaOne
+    fonts:
+      - asset: assets/SquadaOne-Regular.ttf
+  - family: ContrailOne
+    fonts:
+      - asset: assets/ContrailOne-Regular.ttf
+  - family: Roboto
+    fonts:
+      - asset: assets/Roboto-Light.ttf      
+  
+  assets:
+    - assets/
+    - assets/images/

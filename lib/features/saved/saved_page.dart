@@ -53,20 +53,33 @@ class _SavedPageState extends State<SavedPage> {
           return const Center(child: Text('No plant diseases found.'));
         }
         return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
           itemCount: scans.length,
           itemBuilder: (context, index) {
             final scan = scans[index];
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 12),
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: AppConstants.primaryColor.withOpacity(.1),
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: ListTile(
-                title: Text(scan.plantName),
+                leading: _buildThumbnail(scan),
+                title: Text(
+                  scan.plantName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(formatTimestamp(scan.dateCreated)),
                 trailing: IconButton(
-                  icon: const Icon(Icons.delete),
+                  icon: const Icon(Icons.delete_outline),
                   onPressed: () => _confirmDelete(index),
                 ),
                 onTap: () => Navigator.of(context).push<SavedDetailPage>(

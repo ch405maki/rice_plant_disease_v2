@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/disease.dart';
 import '../../../data/repositories/disease_repository.dart';
-import 'detail_page.dart';
+import 'disease_dialog.dart';
 import 'widgets/plant_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,25 +18,20 @@ class _HomePageState extends State<HomePage> {
   static const String _healthyLabel = 'NORMAL RICE PLANT';
 
   void _openDetail(Disease disease) {
-    Navigator.of(context).push<DetailPage>(
-      MaterialPageRoute<DetailPage>(
-        builder: (_) => DetailPage(disease: disease),
-      ),
-    );
+    DiseaseDialog(disease: disease).show(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final healthy = widget.diseases.byLabel(_healthyLabel);
     final diseases = widget.diseases.all.where(
       (d) => d.modelLabel != null && d.modelLabel != _healthyLabel,
     ).toList();
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.only(top: 4, bottom: 32),
           children: [
             _buildBanner(),
             _buildSectionTitle('Healthy Rice plant'),
@@ -51,7 +46,6 @@ class _HomePageState extends State<HomePage> {
                 disease: disease,
                 onTap: () => _openDetail(disease),
               ),
-            SizedBox(height: size.height * .2),
           ],
         ),
       ),
@@ -59,11 +53,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBanner() {
-    return SizedBox(
-      height: 150.0,
-      child: Image.asset(
-        'assets/images/banner.jpg',
-        fit: BoxFit.cover,
+    // Margin on all sides so the hero breathes away from the screen edges,
+    // with a generous-but-not-excessive rounding.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          height: 160.0,
+          width: double.infinity,
+          child: Image.asset(
+            'assets/images/banner.jpg',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+        ),
       ),
     );
   }

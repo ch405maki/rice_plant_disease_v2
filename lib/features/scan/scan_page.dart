@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../app_dependencies.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/disease.dart';
 import '../../data/models/saved_scan.dart';
@@ -17,6 +18,8 @@ import 'widgets/result_view.dart';
 import 'widgets/unrecognized_panel.dart';
 
 enum _ScanStatus { idle, analyzing, success, error }
+
+const _minAnalyzingDuration = Duration(milliseconds: 3000);
 
 class ScanPage extends StatefulWidget {
   const ScanPage({
@@ -61,6 +64,7 @@ class _ScanPageState extends State<ScanPage> {
       return;
     }
 
+    final startedAt = DateTime.now();
     setState(() {
       _status = _ScanStatus.analyzing;
       _imageFile = File(picked.path);
@@ -69,9 +73,21 @@ class _ScanPageState extends State<ScanPage> {
       _saved = false;
       _recognized = false;
     });
+
+    Future<void> ensureMinDisplay() async {
+      final shownForMs =
+          DateTime.now().difference(startedAt).inMilliseconds;
+      final remainingMs = _minAnalyzingDuration.inMilliseconds - shownForMs;
+      if (remainingMs > 0) {
+        await Future.delayed(Duration(milliseconds: remainingMs));
+      }
+    }
+
     try {
       final file = _imageFile!;
       final decoded = await widget.dependencies.imageService.decode(file);
+      await ensureMinDisplay();
+      if (!mounted) return;
       if (decoded == null) {
         setState(() => _status = _ScanStatus.error);
         return;
@@ -86,6 +102,8 @@ class _ScanPageState extends State<ScanPage> {
         _accuracyLabel = formatAccuracy(result.confidence);
       });
     } catch (_) {
+      await ensureMinDisplay();
+      if (!mounted) return;
       setState(() => _status = _ScanStatus.error);
     }
   }
@@ -128,15 +146,20 @@ class _ScanPageState extends State<ScanPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final showImage = _imageFile != null;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const ColoredBox(color: Colors.black),
-          if (showImage)
-            Image.file(_imageFile!, fit: BoxFit.cover, gaplessPlayback: true),
+          if (_status == _ScanStatus.success)
+            ColoredBox(
+              color: Color.lerp(lightGreenLeaves, Colors.white, .5)!,
+            )
+          else ...[
+            const ColoredBox(color: Colors.black),
+            if (showImage)
+              Image.file(_imageFile!, fit: BoxFit.cover, gaplessPlayback: true),
+          ],
           if (_status == _ScanStatus.analyzing) const AnalyzingOverlay(),
           Positioned(
             top: 50,
@@ -159,10 +182,11 @@ class _ScanPageState extends State<ScanPage> {
             Positioned.fill(child: _buildErrorOverlay()),
           if (_status == _ScanStatus.success)
             Positioned(
-              bottom: 0,
+              top: 96,
               left: 0,
               right: 0,
-              child: _buildBottomPanel(size),
+              bottom: 0,
+              child: _buildResultPanel(),
             ),
         ],
       ),
@@ -209,28 +233,19 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  Widget _buildBottomPanel(Size size) {
-    final height = size.height * .6;
-    return Container(
-      height: height,
-      width: size.width,
-      padding: const EdgeInsets.only(top: 18),
-      decoration: const BoxDecoration(
-        color: AppConstants.panelColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-      ),
-      child: _recognized
-          ? ResultView(
-              disease: _disease ?? widget.dependencies.diseases.fallback,
-              accuracyLabel: _accuracyLabel,
-            )
-          : UnrecognizedPanel(
-              confidenceLabel: _accuracyLabel,
-              saved: _saved,
-              onRetry: _pickAndAnalyze,
-              onChangePhoto: () => _pickAndAnalyze(_otherSource),
-              onSave: _saveScan,
-            ),
+  Widget _buildResultPanel() {
+    if (!_recognized) {
+      return UnrecognizedPanel(
+        confidenceLabel: _accuracyLabel,
+        onRetry: _pickAndAnalyze,
+        onChangePhoto: () => _pickAndAnalyze(_otherSource),
+        imageFile: _imageFile,
+      );
+    }
+    return ResultView(
+      disease: _disease ?? widget.dependencies.diseases.fallback,
+      accuracyLabel: _accuracyLabel,
+      imageFile: _imageFile,
     );
   }
 }

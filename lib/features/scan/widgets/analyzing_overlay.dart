@@ -1,10 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_styles.dart';
 
 /// Full-screen overlay shown while the image is being analysed. Renders a
-/// sweeping scan line plus a rotating radar and a status text.
+/// QR-scanner-style bracket frame with a glowing scan line sweeping through it.
 class AnalyzingOverlay extends StatefulWidget {
   const AnalyzingOverlay({Key? key}) : super(key: key);
 
@@ -16,7 +18,7 @@ class _AnalyzingOverlayState extends State<AnalyzingOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1500),
+    duration: const Duration(milliseconds: 1800),
   )..repeat();
 
   @override
@@ -28,118 +30,125 @@ class _AnalyzingOverlayState extends State<AnalyzingOverlay>
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final t = _controller.value;
-          final scanLineY = -1.0 + t * 2.0;
-          final radarAngle = t * 6.2832;
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // Dim the image so the content stays readable.
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.black54, Colors.black26],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Dim the image so the frame stays readable.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black54, Colors.black26],
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 240,
+                  height: 240,
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, _) => CustomPaint(
+                      painter: _ScanFramePainter(t: _controller.value),
+                    ),
                   ),
                 ),
-              ),
-              // Sweeping scan line.
-              Align(
-                alignment: Alignment(0, scanLineY),
-                child: Container(
-                  width: double.infinity,
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppConstants.primaryColor.withOpacity(0.7),
-                        blurRadius: 14,
-                        spreadRadius: 3,
-                      ),
-                    ],
+                const SizedBox(height: 32),
+                const Text(
+                  'Analyzing image...',
+                  style: TextStyle(
+                    fontFamily: kMainFont,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
-              ),
-              // Center radar + status.
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 96,
-                      height: 96,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.black.withOpacity(0.35),
-                              border: Border.all(
-                                color: AppConstants.primaryColor,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          Transform.rotate(
-                            angle: radarAngle,
-                            child: Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: SweepGradient(
-                                  startAngle: 0,
-                                  endAngle: 3.14159,
-                                  colors: [
-                                    Colors.transparent,
-                                    AppConstants.primaryColor.withOpacity(0.85),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.photo_camera,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    const Text(
-                      'Analyzing image...',
-                      style: TextStyle(
-                        fontFamily: kMainFont,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Scanning for disease indicators',
-                      style: TextStyle(
-                        fontFamily: kMainFont,
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.85),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+                Text(
+                  'Scanning for disease indicators',
+                  style: TextStyle(
+                    fontFamily: kMainFont,
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _ScanFramePainter extends CustomPainter {
+  _ScanFramePainter({required this.t});
+
+  /// Animation progress 0..1.
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frame = size.shortestSide;
+    final inset = frame * 0.05;
+    final weight = frame * 0.035;
+    final cornerLen = frame * 0.17;
+    const color = AppConstants.primaryColor;
+
+    final crisp = Paint()
+      ..color = color
+      ..strokeWidth = weight
+      ..strokeCap = StrokeCap.round;
+
+    void drawCorner(Offset corner, double dirX, double dirY) {
+      canvas.drawLine(corner, corner + Offset(cornerLen * dirX, 0), crisp);
+      canvas.drawLine(corner, corner + Offset(0, cornerLen * dirY), crisp);
+    }
+
+    drawCorner(Offset(inset, inset), 1, 1);
+    drawCorner(Offset(frame - inset, inset), -1, 1);
+    drawCorner(Offset(inset, frame - inset), 1, -1);
+    drawCorner(Offset(frame - inset, frame - inset), -1, -1);
+
+    // Scan line sweeping top -> bottom inside the frame. A thin core line with
+    // a soft, fading glow that ramps up near the middle of the sweep and fades
+    // out toward the frame edges.
+    final sweepY = inset + t * (frame - inset * 2);
+    final start = Offset(inset, sweepY);
+    final end = Offset(frame - inset, sweepY);
+
+    // Fade envelope: brightest in the middle of the travel (t=0.5), dim at the
+    // top/bottom extremes (t=0 and t=1) where the sweep turns around.
+    final brightness = (math.sin(t * math.pi)).clamp(0.0, 1.0).toDouble();
+    final glowOpacity = 0.45 * brightness;
+    final coreOpacity = 0.35 + 0.65 * brightness;
+
+    final outerGlow = Paint()
+      ..color = AppConstants.primaryColor.withOpacity(glowOpacity)
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(start, end, outerGlow);
+
+    final innerGlow = Paint()
+      ..color = AppConstants.primaryColor.withOpacity(glowOpacity * 1.5)
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawLine(start, end, innerGlow);
+
+    final core = Paint()
+      ..color = AppConstants.primaryColor.withOpacity(coreOpacity)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(start, end, core);
+  }
+
+  @override
+  bool shouldRepaint(_ScanFramePainter oldDelegate) => oldDelegate.t != t;
 }

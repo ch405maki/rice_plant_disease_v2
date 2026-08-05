@@ -1,25 +1,26 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../widgets/primary_button.dart';
 
 /// Panel shown when the scan could not be confidently matched to a disease.
-/// Offers photo tips and retry/save actions instead of a fake result.
+/// Shows the scanned image and offers photo tips and retry actions instead of
+/// a fake result.
 class UnrecognizedPanel extends StatelessWidget {
   const UnrecognizedPanel({
     Key? key,
     required this.confidenceLabel,
     required this.onRetry,
     required this.onChangePhoto,
-    required this.onSave,
-    this.saved = false,
+    this.imageFile,
   }) : super(key: key);
 
   final String confidenceLabel;
   final VoidCallback onRetry;
   final VoidCallback onChangePhoto;
-  final VoidCallback onSave;
-  final bool saved;
+  final File? imageFile;
 
   static const _tips = <String>[
     'Use a clear, well-lit photo of the affected leaf.',
@@ -29,106 +30,201 @@ class UnrecognizedPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(
-            Icons.search_off,
-            size: 46,
-            color: AppConstants.primaryColor,
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'We couldn\'t identify this one',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: AppConstants.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'The model wasn\'t confident enough to match this photo '
-            'to a known disease.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Model confidence: $confidenceLabel',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const Divider(height: 28),
-          const Text(
-            'For a more reliable result:',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: AppConstants.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (final tip in _tips)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 5),
-                    child: Icon(
-                      Icons.circle,
-                      size: 6,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _HeroCard(imageFile: imageFile, confidenceLabel: confidenceLabel),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    width: 54,
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppConstants.primaryColor.withOpacity(.12),
+                    ),
+                    child: const Icon(
+                      Icons.search_off,
+                      size: 28,
                       color: AppConstants.primaryColor,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      tip,
-                      style: const TextStyle(fontSize: 13, height: 1.3),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'We couldn\'t identify this one',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'For a more reliable result:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppConstants.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (final tip in _tips)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.check_circle_outline,
+                            size: 16,
+                            color: AppConstants.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            tip,
+                            style: const TextStyle(fontSize: 14, height: 1.35),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: PrimaryButton(
+                        label: 'Try again',
+                        icon: Icons.refresh,
+                        width: double.infinity,
+                        onPressed: onRetry,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SecondaryButton(
+                        label: 'Another photo',
+                        onPressed: onChangePhoto,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  label: 'Try again',
-                  icon: Icons.refresh,
-                  width: double.infinity,
-                  onPressed: onRetry,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _SecondaryButton(
-                  label: 'Another photo',
-                  onPressed: onChangePhoto,
-                ),
-              ),
-            ],
           ),
-          const SizedBox(height: 10),
-          TextButton.icon(
-            onPressed: saved ? null : onSave,
-            icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-            label: Text(saved ? 'Saved' : 'Save as Unidentified'),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.imageFile, required this.confidenceLabel});
+
+  final File? imageFile;
+  final String confidenceLabel;
+
+  /// Renders the label as "Model confidence: X%" instead of "Accuracy: X%".
+  String _toModelConfidence(String label) {
+    const prefix = 'Accuracy';
+    return label.startsWith(prefix)
+        ? 'Model confidence${label.substring(prefix.length)}'
+        : label;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppConstants.primaryColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 92,
+              height: 92,
+              child: imageFile == null
+                  ? Container(
+                      color: Colors.white.withOpacity(.15),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.image_outlined,
+                        size: 30,
+                        color: Colors.white70,
+                      ),
+                    )
+                  : Image.file(
+                      imageFile!,
+                      fit: BoxFit.cover,
+                      cacheWidth: 184,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Unidentified',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 21,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (confidenceLabel.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(.18),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.verified_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _toModelConfidence(confidenceLabel),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

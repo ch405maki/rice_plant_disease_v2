@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/disease.dart';
 
-/// Reusable disease card used on the home page.
+/// Reusable disease card used on the home page. Mirrors the result-page hero:
+/// a rounded thumbnail with padding inside a softly-rounded card.
 class PlantCard extends StatelessWidget {
   const PlantCard({Key? key, required this.disease, required this.onTap})
       : super(key: key);
@@ -15,10 +16,11 @@ class PlantCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 100,
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -30,36 +32,33 @@ class PlantCard extends StatelessWidget {
         child: Row(
           children: [
             _buildThumbnail(),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      disease.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    disease.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      disease.description,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _cleanText(disease.description),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      height: 1.35,
+                      color: Colors.black54,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
           ],
         ),
       ),
@@ -68,22 +67,28 @@ class PlantCard extends StatelessWidget {
 
   Widget _buildThumbnail() {
     final url = disease.imageUrl;
-    if (url == null) {
-      return SizedBox(
-        width: 80,
-        height: 80,
-        child: Center(child: Text(disease.name)),
-      );
-    }
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 12),
-        child: ClipRRect(
-          child: Image.asset(url, fit: BoxFit.cover),
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 84,
+        height: 84,
+        child: url == null
+            ? Container(
+                color: Colors.black12,
+                alignment: Alignment.center,
+                child: const Icon(Icons.image_outlined, color: Colors.black38),
+              )
+            : Image.asset(url, fit: BoxFit.cover),
       ),
     );
+  }
+
+  /// Strips bullet markers so subtitles read as clean text.
+  String _cleanText(String text) {
+    return text
+        .replaceAll('•', '')
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }

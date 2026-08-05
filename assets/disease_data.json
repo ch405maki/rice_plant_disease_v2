@@ -1,0 +1,72 @@
+[
+  {
+    "id": 0,
+    "name": "Fail to recognise",
+    "image": null,
+    "modelLabel": null,
+    "description": "Fail to recognise",
+    "causes": "Fail to recognise",
+    "symptoms": "Fail to recognise",
+    "treatment": "Fail to recognise"
+  },
+  {
+    "id": 1,
+    "name": "Bacterial Blight",
+    "image": "assets/images/bacterialblight.jpg",
+    "modelLabel": "BACTERIAL BLIGHT",
+    "description": "• Bacterial leaf blight is caused by a bacterium called Xanthomonas campestris.\n\n• Elongated lesions appear near the tips of leaves or edges that are several inches long and water-soaked in appearance.\n\n• Leaf tips or edges turn firstly into white, then yellow, and finally gave grey color due to fungi (Saprophytic fungi).\n\nPathogen  Name:\nXanthomonas campestris pv. oryzae",
+    "causes": "• Bacterial leaf blight is caused by a bacterium called Xanthomonas campestris.\n• Elongated lesions appear near the tips of leaves or edges that are several inches long and water-soaked in appearance.\n• Leaf tips or edges turn firstly into white, then yellow, and finally gave grey color due to fungi (Saprophytic fungi).\n\nPathogen  Name: Xanthomonas campestris pv. oryzae",
+    "symptoms": "Damage of Bacterial Leaf Blast:\n• Yield loss due to bacterial blight can be as much as 70% when susceptible varieties are grown, in environments favorable to the disease.",
+    "treatment": "• Use balanced amounts of plant nutrients, especially nitrogen.\n• Ensure good drainage of fields (in conventionally flooded crops) and nurseries.\n• Keep fields clean. Remove weed hosts and plow under rice stubble, straw, rice ratoons, and volunteer seedlings, which can serve as hosts of bacteria.\n• Allow fallow fields to dry to suppress disease agents in the soil and plant residues."
+  },
+  {
+    "id": 2,
+    "name": "Brown Spot",
+    "image": "assets/images/brownspot.jpg",
+    "modelLabel": "BROWN SPOT",
+    "description": "• Brown spot has been historically largely ignored as one of the most common and most damaging rice diseases.\n\n• Brown spot is a fungal disease that infects the coleoptile, leaves, leaf sheath, panicle branches, glumes, and spikelets.\n\n• The disease is common in soils that are poorly drained or deficient in nutrients.\n\nPathogen  Name:\nBipolaris Oryzae",
+    "causes": "• Brown spot has been historically largely ignored as one of the most common and most damaging rice diseases.\n• Brown spot is a fungal disease that infects the coleoptile, leaves, leaf sheath, panicle branches, glumes, and spikelets.\n• The disease is common in soils that are poorly drained or deficient in nutrients.\n\nPathogen  Name: Bipolaris oryzae",
+    "symptoms": "• The symptoms are brown spots on the leaf and grain.\n• Seedling blight may occur in seedlings grown from infected seeds\n\nDamage of Brown Spot:\n• It lowers grain quality and weight. The brown spot may kill up to 50% of seedlings.",
+    "treatment": "• The most effective way of controlling brown spots is to grow plants in good soil and provide adequate fertilizer.\n• Planting a resistant variety is the most practical way of controlling.\n• Treating the seeds with fungicide or hot water helps control the disease.\n• Copper fungicides spray in the right amount and at right time will reduce the damage."
+  },
+  {
+    "id": 3,
+    "name": "Leaf Blast",
+    "image": "assets/images/leafblast.jpeg",
+    "modelLabel": "LEAF BLAST",
+    "description": "• Blast is caused by the fungus Magnaporthe oryzae. It can affect all above-ground parts of a rice plant: leaf, collar, node, neck, parts of panicle, and sometimes leaf sheath.\n\n• It is one of the most destructive diseases of rice.\n\nPathogen  Name:\nPyricularia oryzae",
+    "causes": "• Blast is caused by the fungus Magnaporthe oryzae. It can affect all above-ground parts of a rice plant: leaf, collar, node, neck, parts of panicle, and sometimes leaf sheath.\n• It is one of the most destructive diseases of rice.\n\nPathogen  Name: Pyricularia oryzae",
+    "symptoms": "• The fungus produces spots or lesions on leaves, nodes, panicles, and grains. The spots are elongated and pointed at each end.\n\nDamage of Leaf Blast:\n• In severe infections, yields may be reduced by 50%. Upland rice is more severely damaged than lowland rice.",
+    "treatment": "• Planting resistant varieties is the most economical way of controlling this disease.\n• Avoid excess nitrogen fertilizer.\n• Several fungicides effectively control blast, but they are not used in the tropics for economic reasons.\n• Based on the study, Tricyclazole 22% + Hexaconazole 3% fungicide proved effective in controlling rice blast when applied at weekly intervals starting from the booting stage.\n• Silicon application to rice crops showed a positive effect in combating rice blast disease."
+  },
+  {
+    "id": 4,
+    "name": "Normal and Healthy Rice plant",
+    "image": "assets/images/normal.jpg",
+    "modelLabel": "NORMAL RICE PLANT",
+    "description": "• Healthy rice leaves are usually a vibrant green, indicating good chlorophyll content.\n\n• A good rice plant will have multiple tillers, resulting in a bushy appearance, which is beneficial for grain production.\n\n• There should be minimal signs of disease or pest damage, with leaves appearing free of significant blemishes, discoloration, or wilting.\n\nPathogen  Name:\nOryza Sativa",
+    "causes": "• Healthy rice leaves are usually a vibrant green, indicating good chlorophyll content.\n• A good rice plant will have multiple tillers, resulting in a bushy appearance, which is beneficial for grain production.\n• There should be minimal signs of disease or pest damage, with leaves appearing free of significant blemishes, discoloration, or wilting.\n\nPathogen  Name: Oryza Sativa",
+    "symptoms": "• A normal and healthy rice plant does not show symptoms of any disease.\n\n• Not Applicable",
+    "treatment": "• Not Applicable"
+  },
+  {
+    "id": 5,
+    "name": "Sheath Blight",
+    "image": "assets/images/shielthblight.jpg",
+    "modelLabel": "SHEALTH BLIGHT",
+    "description": "• Sheath blight is a fungal disease caused by Rhizoctonia solani. It causes brown rot of stems beginning at the soil line, and roots may have brown lesions.\n\n• The severity the disease depends on cultivation, land preparation, varieties, crop management, etc.\n\nPathogen  Name:\nRhizoctonia solani",
+    "causes": "• Sheath blight is a fungal disease caused by Rhizoctonia solani. It causes brown rot of stems beginning at the soil line, and roots may have brown lesions.\n• The severity the disease depends on cultivation, land preparation, varieties, crop management, etc.\n\nPathogen  Name: Rhizoctonia solani",
+    "symptoms": "• Sheath blight causes spots on the leaf sheath.\n• High temperature and humidity increase the severity.\n\nDamage of Sheath Blight:\n• Many of the leaves are killed during severe infections and yields may be reduced by 20-25%",
+    "treatment": "• No variety has a high level of resistance to the disease.\n• Do not apply too much nitrogen fertilizer.\n• Foliar application of appropriate fungicides (e.g. azoxystrobin, propiconazole, trifloxystrobin and propiconazole, iprodine) is carried out to control sheath blight.\n• Seed treatment with trifloxystrobin or azoxystrobin or carboxin + thiram is also used to control sheath blight."
+  },
+  {
+    "id": 6,
+    "name": "Tungro",
+    "image": "assets/images/tungro.jpg",
+    "modelLabel": "TUNGRO",
+    "description": "• Rice tungro disease is caused by the combination of two viruses, which are transmitted by leafhoppers. It causes leaf discoloration, stunted growth, reduced tiller numbers, and sterile or partly filled grains.\n\n• Tungro infects cultivated rice, some wild rice relatives, and other grassy weeds commonly found in rice paddies.\n\nPathogen  Name:\nRice tungro bacilliform virus (RTBV)",
+    "causes": "• Rice tungro disease is caused by the combination of two viruses, which are transmitted by leafhoppers. It causes leaf discoloration, stunted growth, reduced tiller numbers, and sterile or partly filled grains.\n• Tungro infects cultivated rice, some wild rice relatives, and other grassy weeds commonly found in rice paddies.\n\nPathogen  Name: Rice tungro bacilliform virus (RTBV)",
+    "symptoms": "• Plants are stunted and change color from green to yellow then orange.\n• Numbers of tillers are reduced, and brown-colored lesions appear on the leaf.\n• Leaves are striped, mottled, or show inter-venial necrosis.\n\nDamage of Tungro:\n• Tungro is one of South and Southeast Asias most damaging and destructive rice diseases. Tungro-susceptible varieties infected at an early growth stage could have as high as 100% yield loss in severe cases.",
+    "treatment": "• Preventive measures are more effective for the control of tungro than direct disease control measures.\n• Using insecticides to control leafhoppers is often not effective, because green leafhoppers continuously move to surrounding fields and spread tungro rapidly in very short feeding times."
+  }
+]

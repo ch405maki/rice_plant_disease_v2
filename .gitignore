@@ -1,0 +1,18 @@
+# Dart / Flutter build artifacts
+.dart_tool/
+build/
+
+# Flutter plugin generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Obsidian vault transient workspace state
+docs/.obsidian/workspace.json
+
+# OS
+.DS_Store

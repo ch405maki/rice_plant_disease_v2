@@ -12,10 +12,6 @@ analyzer:
   exclude:
     - build/**
     - lib/**.g.dart
-    
-  strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
 
   errors:
     always_declare_return_types: error

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.kodeco.plantreco">
+    package="com.agriguard.app">
    <application
-        android:label="Rice Plant Disease Detector"
+        android:label="AgriGuard"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

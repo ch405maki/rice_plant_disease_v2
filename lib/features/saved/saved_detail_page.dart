@@ -11,6 +11,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_styles.dart';
+import '../../core/utils/formatters.dart';
 import '../../data/models/saved_scan.dart';
 import '../../widgets/circle_icon_button.dart';
 
@@ -72,16 +73,40 @@ class SavedDetailPage extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('PDF Exported'),
-        content: const Text('The PDF file has been exported successfully.'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'PDF Exported',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'The PDF file has been exported successfully.',
+          textAlign: TextAlign.start,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actionsAlignment: MainAxisAlignment.end,
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: AppConstants.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
-          TextButton(
+          const SizedBox(width: 6),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppConstants.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () => OpenFile.open(outputFile.path),
-            child: const Text('Open File'),
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: const Text('Open File'),
           ),
         ],
       ),
@@ -117,68 +142,122 @@ class SavedDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final background = Color.lerp(lightGreenLeaves, Colors.white, .5)!;
     return Scaffold(
-      backgroundColor: AppConstants.panelColor,
-      body: Stack(
-        children: [
-          if (scan.imageBytes != null)
-            Container(
-              alignment: Alignment.topCenter,
-              child: Image.memory(
-                scan.imageBytes!,
-                width: size.width,
-                cacheWidth: (size.width * MediaQuery.devicePixelRatioOf(context))
-                    .round(),
+      backgroundColor: background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CircleIconButton(
+                    icon: Icons.close,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  CircleIconButton(
+                    icon: Icons.print,
+                    onTap: () => _exportAsPdf(context),
+                    backgroundColor: Colors.white,
+                    iconColor: AppConstants.primaryColor,
+                  ),
+                ],
               ),
             ),
-          Positioned(
-            top: 50,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CircleIconButton(
-                  icon: Icons.close,
-                  onTap: () => Navigator.of(context).pop(),
-                  backgroundColor: AppConstants.panelColor,
-                ),
-                CircleIconButton(
-                  icon: Icons.print,
-                  onTap: () => _exportAsPdf(context),
-                  backgroundColor: Colors.white,
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 300,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppConstants.panelColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-              ),
+            _buildHeroCard(),
+            Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 16, bottom: 24),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(scan.plantName, style: kResultTextStyle),
-                    ),
-                    const Divider(),
                     _detailSection('Causes', scan.causes),
-                    const Divider(),
+                    const SizedBox(height: 16),
                     _detailSection('Symptoms', scan.symptoms),
-                    const Divider(),
+                    const SizedBox(height: 16),
                     _detailSection('Treatment', scan.treatment),
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroCard() {
+    final bytes = scan.imageBytes;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppConstants.primaryColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 92,
+              height: 92,
+              child: bytes == null
+                  ? const ColoredBox(
+                      color: Colors.white12,
+                      child: Icon(Icons.image_outlined, color: Colors.white70),
+                    )
+                  : Image.memory(bytes, fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  scan.plantName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 21,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.18),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        formatTimestamp(scan.dateCreated),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -187,15 +266,37 @@ class SavedDetailPage extends StatelessWidget {
   }
 
   Widget _detailSection(String title, String body) {
-    return ListTile(
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: AppConstants.primaryColor,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: AppConstants.primaryColor,
+          ),
         ),
-      ),
-      subtitle: Text(body, textAlign: TextAlign.justify),
+        const SizedBox(height: 8),
+        Text(
+          _cleanText(body),
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.4,
+            letterSpacing: 0.2,
+            color: Colors.black54,
+          ),
+        ),
+      ],
     );
+  }
+
+  /// Strips bullet markers so saved text reads as clean, flowing text.
+  String _cleanText(String text) {
+    return text
+        .replaceAll('•', '')
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }

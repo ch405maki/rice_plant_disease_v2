@@ -22,18 +22,41 @@ class _SavedPageState extends State<SavedPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Deletion'),
-        content: const Text(
-          'Are you sure you want to delete this plant disease?',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
+        title: const Text(
+          'Delete scan?',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this plant disease?\n'
+          'This cannot be undone.',
+          textAlign: TextAlign.start,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actionsAlignment: MainAxisAlignment.end,
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: AppConstants.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          const SizedBox(width: 6),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: const Text('Delete'),
           ),
         ],
       ),
@@ -41,6 +64,23 @@ class _SavedPageState extends State<SavedPage> {
     if (confirmed == true) {
       await widget.scans.deleteAt(index);
     }
+  }
+
+  Widget _buildThumbnail(SavedScan scan) {
+    final bytes = scan.imageBytes;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 52,
+        height: 52,
+        child: bytes == null
+            ? const ColoredBox(
+                color: Colors.black12,
+                child: Icon(Icons.image_outlined, color: Colors.black38),
+              )
+            : Image.memory(bytes, fit: BoxFit.cover),
+      ),
+    );
   }
 
   @override

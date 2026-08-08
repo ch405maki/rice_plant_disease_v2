@@ -36,7 +36,7 @@ class _RootPageState extends State<RootPage> {
     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
     BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
     BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Saved'),
-    BottomNavigationBarItem(icon: Icon(Icons.person), label: 'About'),
+    BottomNavigationBarItem(icon: Icon(Icons.info_outline), label: 'About'),
   ];
 
   @override

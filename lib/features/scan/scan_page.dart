@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../app_dependencies.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/disease.dart';
@@ -115,7 +114,7 @@ class _ScanPageState extends State<ScanPage> {
 
   Disease _resolveDisease(ScanResult result) {
     final aboveThreshold =
-        result.confidence >= AppConstants.confidenceThreshold;
+        result.confidence >= widget.dependencies.settings.confidenceThreshold;
     if (!aboveThreshold) {
       return widget.dependencies.diseases.fallback;
     }

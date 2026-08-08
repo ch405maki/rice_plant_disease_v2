@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -37,10 +38,13 @@ class InferenceService {
   static Future<InferenceService?> load({
     String modelAsset = AppConstants.modelAsset,
     String labelsAsset = AppConstants.labelsAsset,
+    String? labelsFilePath,
   }) async {
     try {
       final interpreter = await Interpreter.fromAsset(modelAsset);
-      final labels = await _loadLabels(labelsAsset);
+      final labels = labelsFilePath != null
+          ? await _loadLabelsFromFile(File(labelsFilePath))
+          : await _loadLabels(labelsAsset);
       return InferenceService._(
         interpreter: interpreter,
         labels: labels,
@@ -55,10 +59,50 @@ class InferenceService {
     }
   }
 
+  /// Loads a user-supplied `.tflite` model from disk, using the uploaded
+  /// labels file when provided and the bundled default labels otherwise.
+  /// Returns `null` when the model cannot be loaded so callers can keep the
+  /// current engine.
+  static Future<InferenceService?> loadFromFile({
+    required File modelFile,
+    File? labelsFile,
+  }) async {
+    try {
+      final interpreter = Interpreter.fromFile(modelFile);
+      final labels = labelsFile != null
+          ? await _loadLabelsFromFile(labelsFile)
+          : await _loadLabels(AppConstants.labelsAsset);
+      return InferenceService._(
+        interpreter: interpreter,
+        labels: labels,
+        inputShape: interpreter.getInputTensor(0).shape,
+        outputShape: interpreter.getOutputTensor(0).shape,
+        inputType: interpreter.getInputTensor(0).type,
+        outputType: interpreter.getOutputTensor(0).type,
+      );
+    } catch (e) {
+      debugPrint('InferenceService loadFromFile failed: $e');
+      return null;
+    }
+  }
+
+  /// Number of classes the loaded model outputs.
+  int get labelCount => _labels.length;
+
   /// Reads labels and strips the numeric index prefix ("0 BACTERIAL BLIGHT").
   static Future<List<String>> _loadLabels(String labelsAsset) async {
     final rawLabels = await FileUtil.loadLabels(labelsAsset);
-    return rawLabels.map((label) {
+    return _cleanLabels(rawLabels);
+  }
+
+  static Future<List<String>> _loadLabelsFromFile(File file) async {
+    final content = await file.readAsString();
+    final lines = content.split('\n').map((line) => line.trim());
+    return _cleanLabels(lines.where((line) => line.isNotEmpty).toList());
+  }
+
+  static List<String> _cleanLabels(List<String> raw) {
+    return raw.map((label) {
       final index = label.indexOf(' ');
       return index == -1 ? label.trim() : label.substring(index).trim();
     }).toList();

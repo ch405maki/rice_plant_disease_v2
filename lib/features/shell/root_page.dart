@@ -6,6 +6,7 @@ import '../about/about_page.dart';
 import '../home/home_page.dart';
 import '../saved/saved_page.dart';
 import '../scan/scan_chooser_page.dart';
+import '../settings/settings_page.dart';
 
 /// Bottom-navigation shell hosting the four main tabs.
 class RootPage extends StatefulWidget {
@@ -54,6 +55,17 @@ class _RootPageState extends State<RootPage> {
             fontSize: 24,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            color: AppConstants.primaryColor,
+            onPressed: () => Navigator.of(context).push<SettingsPage>(
+              MaterialPageRoute<SettingsPage>(
+                builder: (_) => SettingsPage(dependencies: widget.dependencies),
+              ),
+            ),
+          ),
+        ],
       ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(

@@ -5,117 +5,109 @@
 
 ## 1. Self-contained TFLite classifier wrapper
 
-**Where**: `lib/classifier/classifier.dart`
+**Where**: `lib/data/services/inference_service.dart`
 
-`Classifier` encapsulates everything an on-device ML consumer needs:
+`InferenceService` encapsulates everything an on-device ML consumer needs:
 
-- private constructor + `static Future<Classifier?> loadWith(labelsFileName, modelFileName)`
-  factory — callers never touch `Interpreter` directly;
-- defensive `null`-return on load failure with `debugPrint` + stack trace;
-- a `predict(Image) -> ClassifierCategory` API that hides preprocessing, inference, and
-  post-processing;
-- `close()` for interpreter teardown.
+- private constructor + `static Future<InferenceService?> load(...)` factory — callers never
+  touch `Interpreter` directly;
+- defensive `null`-return on load failure (never throws) so the scan flow degrades to an
+  error state instead of crashing;
+- `predict(Image) -> ScanResult` hides preprocessing, inference, and post-processing;
+- `dispose()` for interpreter teardown.
 
 **Extract as**: a template for any TFLite image-classification feature. The preprocessing
 pipeline (center-crop → `ResizeOp(inputShape[1])` → `NormalizeOp(127.5, 127.5)`) is already
-generic; only the asset file names are app-specific. Consider pushing `labelsFileName` /
-`modelFileName` into a config object.
+generic; only the asset/type names are app-specific. The `loadFromFile` variant (user-supplied
+tflite + optional labels) makes the wrapper reusable for model uploads.
 
 ## 2. Enum-driven result state machine
 
-**Where**: `lib/ui/scan_page.dart:32-36`
+**Where**: `lib/features/scan/scan_page.dart`
 
 ```dart
-enum _ResultStatus { notStarted, notFound, found }
+enum _ScanStatus { idle, analyzing, success, error }
 ```
 
-A 3-state UI model (not-started / not-found / found) makes rendering logic a simple
-`switch`/`if` over one variable instead of several booleans. Reusable for any async-result
-screen (scan, upload, verify).
+A 4-state UI model makes rendering logic a simple `switch`/`if` over one variable instead of
+several booleans. Reusable for any async-result screen (scan, upload, verify).
 
-## 3. Static catalog + filter helpers
+## 3. ChangeNotifier over SharedPreferences for settings
 
-**Where**: `lib/models/plants.dart:124-133`, `lib/models/disease_description.dart:177-180`
+**Where**: `lib/data/repositories/settings_repository.dart`
 
-Domain data lives as `static List<X>` on the model class with derived lists via
-`.where(...)`:
+Persisted user settings (threshold, custom model/labels) are exposed as a `ChangeNotifier`;
+the UI subscribes via `AnimatedBuilder` and the change is written back to prefs on each
+setter. Combine with a `clamp` guard so persisted values stay in a valid range.
 
-```dart
-static List<Plant> getFavoritedPlants() =>
-    Plant.plantList.where((e) => e.isFavorated == true).toList();
-```
+## 4. Single source-of-truth catalog + label lookup
 
-Good pattern for small, read-only, offline content (dictionaries, disease sheets, help
-entries). **Caveat**: it is only reusable if the data is actually immutable and the catalog
-is not duplicated (see the `Plant`/`Disease` mismatch in [[technical-debt]]).
+**Where**: `lib/data/repositories/disease_repository.dart`, `lib/data/models/disease.dart`
 
-## 4. Custom widget composition with named constructors
+Domain content (diseases) lives in one JSON asset that is parsed into typed records; all
+UI/decision code looks it up by `modelLabel` (case-insensitive). This removes duplicated
+static catalogs and index-mapping bugs.
 
-**Where**: `lib/ui/screens/widgets/custom_textfield.dart`,
-`lib/ui/screens/widgets/plant_photo_view.dart`
+## 5. Reusable widget composition with rounded, padded thumbnails
 
-Reusable `StatelessWidget`s expose a small set of typed params (`icon`, `obscureText`,
-`hintText`; `file`) and internally own all decoration. Auth screens reuse
-`CustomTextfield` three times per form — a clean way to standardise inputs.
+**Where**: `lib/features/home/widgets/plant_card.dart`,
+`lib/features/scan/widgets/result_view.dart`, `lib/features/saved/saved_detail_page.dart`
 
-## 5. Consistent page transitions
+The "hero card" idiom — rounded image in a padded, softly-rounded card — is repeated across
+home, results, and saved detail. Extract a shared `RoundedThumb` / `HeroCard` widget if a
+fourth use appears.
 
-**Where**: `page_transition` used across `root_page.dart`, `scan_page_gallery.dart`,
-`home_page.dart`, `signin_page.dart`, `signup_page.dart`, `forgot_password.dart`
+## 6. Hive + hand-maintained TypeAdapter codegen
 
-All content navigation uses `PageTransition(child: ..., type: PageTransitionType.bottomToTop)`.
-A single app-wide transition style keeps UX consistent and is trivially centralisable into a
-helper like `AppNavigator.push(context, widget)`.
+**Where**: `lib/data/models/saved_scan.dart` + `saved_scan.g.dart`,
+`lib/data/repositories/scan_repository.dart`
 
-## 6. Hive + TypeAdapter codegen persistence
-
-**Where**: `lib/models/plant_disease_model.dart` + `.g.dart`, `lib/main.dart:13-21`
-
-- Annotate a plain class with `@HiveType`/`@HiveField`, extend `HiveObject` to get a `key`
-  (used for deletion in `favorite_page.dart:47`);
-- regenerate the adapter with `build_runner`;
-- initialise once (`Hive.init` + `registerAdapter` + `openBox`) in `main()`.
-
-The box is reopened safely in `favorite_page.dart:13-16` via `await Hive.openBox` (idempotent),
-so screens can fetch the box on demand. Reusable template for any local, structured store.
+- A plain class with an adapter registered once in `main()` and a `Box` opened by name;
+- a tiny repository exposes `listenable()` (`ValueListenable<Box>`) so the Saved tab updates
+  live through `ValueListenableBuilder`, plus small `add`/`deleteAt` methods.
 
 ## 7. PDF export with bundled Unicode fallback font
 
-**Where**: `lib/ui/screens/plant_description_page.dart:19-163`
+**Where**: `lib/features/saved/saved_detail_page.dart`
 
-- `pw.Document` → single `pw.Page` → label/value rows with `pw.Divider()`;
-- `rootBundle.load('assets/ArialUnicodeMS.ttf')` gives a TTF that handles the bullet/Unicode
-  glyphs in the disease copy;
-- write to `getTemporaryDirectory()` then `OpenFile.open` after an alert dialog.
+- `pw.Document` → single `pw.Page` → `rootBundle.load('assets/ArialUnicodeMS.ttf')` for
+  bullet/Unicode glyphs in the disease copy;
+- write to `getTemporaryDirectory()` then `OpenFile.open`, with a dialog confirm.
+- Note: the 23 MB font is heavy — see [[technical-debt]] T18.
 
-Reusable for reports/records. Note: bundling a 23 MB font is heavy — see [[technical-debt]].
+## 8. Off-UI-isolate image decode
 
-## 8. Splash → onboarding gate via a flag
+**Where**: `lib/data/services/image_service.dart`
 
-**Where**: `lib/splashScreen/splash_screen.dart:20-33`, `lib/ui/onboarding_screen.dart`
+`img.decodeImage` runs inside `compute()` so a large photo doesn't block the UI isolate. The
+synchronous `Interpreter.run` call in `InferenceService.predict` is the remaining hot-path
+(see T7 in [[technical-debt]]).
+
+## 9. Splash → onboarding gate via a flag
+
+**Where**: `lib/features/onboarding/splash_screen.dart`, `onboarding_screen.dart`
 
 A single SharedPreferences boolean (`'repeat'`) records "onboarding completed", letting the
-splash choose the entry point on each launch. Simple, robust first-run gating that needs no
-extra packages.
+splash choose the entry point on each launch. Simple, robust first-run gating; `pushReplacement`
+avoids re-entering the splash via back.
 
-## 9. Tab shell with `IndexedStack`
+## 10. Tab shell with `IndexedStack`
 
-**Where**: `lib/ui/root_page.dart:67-70`
+**Where**: `lib/features/shell/root_page.dart`
 
-Keeping all four tab pages alive in an `IndexedStack` preserves per-tab scroll/state on tab
+Keeping all four tab pages alive in an `IndexedStack` preserves per-tab state on tab
 switches — a good default for a small fixed set of tabs.
 
-## 10. Typed result value objects
+## 11. Typed result value objects
 
-**Where**: `lib/classifier/classifier_category.dart`, `lib/models/plant_disease_model.dart`
+**Where**: `lib/data/models/scan_result.dart`
 
-Small immutable DTOs with `toString()` overrides (`Category{label: ..., score: ...}`) make
-debug output readable (`scan_page.dart` prints `'Top category: $topResult'`). Adopt for any
-boundary between compute and UI.
+Small immutable DTOs (`ScanResult { label, confidence }`) keep the boundary between compute
+and UI explicit.
 
 ---
 
-**Summary of candidates to promote to shared code**: the `Classifier` pipeline (1), a
-`AppNavigator` transition helper (5), a `Hive` box-access helper (6), and a reusable
-`ResultView` widget for the found/not-found pattern (2). See [[architecture]] for how these
-fit together.
+**Summary of candidates to promote to shared code**: `AppDependencies`-style DI container (any
+larger project), the `ScanResult`/`_ScanStatus` async-screen pattern (2), a shared
+`RoundedThumbnail` widget (5), a `Boxed` repo pattern (6), and the TFLite classifier
+wrapper (1).

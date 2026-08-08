@@ -1,7 +1,7 @@
 # Technical Debt
 
-> Defects, dead code, and improvement priorities found by reviewing the implementation at
-> commit `f0a9180`. Items are grouped by severity. Related: [[codebase-analysis]],
+> Defects, dead code, and improvement priorities found by reviewing the current
+> implementation. Items are grouped by severity. Related: [[codebase-analysis]],
 > [[architecture]].
 
 ## Status
@@ -19,7 +19,7 @@ The remediation listed below was applied in the refactor that restructured `lib/
 | T6  Duplicate/inconsistent persistence | Resolved — favorites concept removed; Saved tab lists Hive scan records via `ScanRepository` |
 | T7  Inference blocks the UI thread | **Open (partial)** — image decode is async but `Interpreter.run` is still synchronous on the UI isolate in `InferenceService.predict` |
 | T8  Bookmark saves on every press | Resolved — `ScanPage._saveScan` saves once, guarded by `_saved` |
-| T9  Hardcoded threshold and magic values | Resolved — colors + `confidenceThreshold` in `AppConstants` |
+| T9  Hardcoded threshold and magic values | Resolved — colors in `AppConstants`; threshold now **runtime-configurable** via `SettingsRepository` (default 0.95) |
 | T10 Auth screens non-functional stubs | Resolved — deleted (`signin`/`signup`/`forgot_password`) |
 | T11 Dead code | Resolved — deleted unused widgets/models/globals and `assets/model.tflite` |
 | T12 Unused / redundant dependencies | Resolved — trimmed `pubspec.yaml` (kept `pdf`/`open_file`; still used by PDF export) |
@@ -36,7 +36,7 @@ The remediation listed below was applied in the refactor that restructured `lib/
 
 ### T7 (partial). Inference runs on the UI isolate
 `InferenceService.predict()` calls `Interpreter.run` synchronously (`lib/data/services/
-inference_service.dart:74`). The model is small (~2 MB) so this is fast in practice, but a
+inference_service.dart:118`). The model is small (~2 MB) so this is fast in practice, but a
 large photo can still jank. Move to `compute()`/`Isolate.run` if it ever becomes a problem.
 
 ### T18 (deferred). 23 MB PDF font
@@ -50,9 +50,20 @@ version needs the matching helper; document the reason in `pubspec.yaml` or auto
 Gradle when the helper publishes a compatible release.
 
 ### Boot order (new)
-`main()` now awaits Hive open, `DiseaseRepository.load()`, and `InferenceService.load()`
-*before* `runApp`, so the splash screen shows only after all work is done. If a cold start
-feels slow, move loading behind the splash and pass a future through `AppDependencies`.
+`main()` now awaits Hive open, settings init, model load (custom-or-bundled), and
+`DiseaseRepository.load()` *before* `runApp`, so the splash screen shows only after all work
+is done. If a cold start feels slow, move loading behind the splash and pass a future through
+`AppDependencies`.
+
+### T21 (new). `AppDependencies.inference` is mutable (hot-swap)
+The custom-model upload mutates a shared field and disposes the previous interpreter. Acceptable
+while the app has one consumer; if that grows, return the new engine instead of storing mutable
+state in the container.
+
+### T22 (new). Custom-model labels may not match the catalog
+A custom model whose label names differ from the disease catalog renders its scans as
+"Unidentified" (no `modelLabel` match). The Settings page "Model requirements" note documents
+this. Low impact for the default model.
 
 ## Suggested remediation order (revisited)
 

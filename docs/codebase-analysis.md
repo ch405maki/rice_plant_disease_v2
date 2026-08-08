@@ -1,124 +1,137 @@
 # Codebase Analysis
 
-> What the code actually does today — file by file, with counts and cross-references.
+> What the code actually does today — module by module, with cross-references.
 > Derived from the implementation. See also [[detailed-documentation]] and
 > [[technical-debt]].
 
 ## Inventory
 
-- **Dart sources**: 28 files under `lib/` (26 Dart + 1 generated adapter `*.g.dart`)
-- **Tests**: 1 file (`test/widget_test.dart`) — broken boilerplate (see below)
-- **Assets**: 6 labels/model files, 20 images, 4 fonts
-- **Single commit** on `master`: `f0a9180` "Final Fine Tuned" (Feb 2025)
+- **Dart sources**: 28 under `lib/` (27 Dart + 1 generated Hive adapter `*.g.dart`)
+- **Tests**: 4 files under `test/` (`data/disease_repository_test.dart`,
+  `data/scan_repository_test.dart`, `widgets/primary_button_test.dart`,
+  `widgets/result_view_test.dart`) — all pass; `flutter analyze` is clean.
+- **Assets**: `assets/model/` (model + labels), `assets/disease_data.json`,
+  `assets/images/`, fonts (incl. 23 MB `ArialUnicodeMS.ttf` for PDF export).
 
 ## Module-by-module
 
 ### `lib/main.dart` — bootstrap
-- Initialises Hive, registers `PlantDiseaseAdapter` (typeId 0), opens box `plantDiseases`,
-  runs `MyApp`.
-- `MyApp` title is `'Coffee Diagnostic'` — inconsistent with the repo purpose.
-- Imports `material.dart` twice.
+- Awaits in order: `Hive.init` (docs dir) → `registerAdapter(SavedScanAdapter())` →
+  open box `plantDiseases` → `SettingsRepository.init()` → load inference (persisted
+  custom model via `loadFromFile` if present, else bundled `load`) →
+  `DiseaseRepository.load()` → `ScanRepository` → `ImageService`.
+- Builds a **non-const** `AppDependencies` and calls `runApp(MyApp(...))`.
+- `MyApp.title` is `'AgriGuard'`; `home` = `SplashScreen(dependencies)`.
 
-### `lib/splashScreen/splash_screen.dart` — startup gate
-- 3 s timer → SharedPreferences `'repeat'` decides onboarding vs `RootPage`.
-- Uses `push`, not `pushReplacement`; splash stays in the back stack.
+### `lib/app_dependencies.dart` — DI container
+- `diseases`, `scans`, `imageService`, `settings` are `final`; `inference` is a **mutable**
+  `InferenceService?` so the app-dependencies engine can be hot-swapped after upload.
 
-### `lib/ui/onboarding_screen.dart` — intro
-- 3 identical-image pages fed by `Constants` copy.
-- Sets `'repeat' = true` then `pushReplacement` to `RootPage`.
-- Imports `global/global.dart` but never uses `id`.
+### `lib/core/constants/app_constants.dart`
+- Palette: `primaryColor` 0xff296e48, `panelColor` 0xFFA7C1B4, `blackColor` Colors.black54.
+- Inference: `confidenceThreshold` 0.95 (factory default; runtime value lives in
+  `SettingsRepository`), `modelAsset` `'model/rice_disease_v1.tflite'` (no `assets/` prefix —
+  `Interpreter.fromAsset` prepends it), `labelsAsset` `'assets/model/labels.txt'`,
+  `diseaseDataAsset` `'assets/disease_data.json'`.
+- Persistence: prefs key `'repeat'` (onboarding), Hive box `'plantDiseases'`; onboarding copy.
 
-### `lib/ui/root_page.dart` — shell
-- `IndexedStack` + fixed 4-item `BottomNavigationBar`.
-- Tab 2 refresh assigns `favorites = Plant.getFavoritedPlants()` but nothing renders it.
+### `lib/core/theme/app_styles.dart` + `lib/core/utils/formatters.dart`
+- Text/typography styles; `formatAccuracy`, `formatTimestamp` helpers.
 
-### `lib/ui/scan_page_gallery.dart` — chooser
-- Two buttons that push `ScanPage(value: 1 | 2)`.
+### `lib/data/models/*`
+- `disease.dart` — unified catalog model: `id, name, modelLabel?, imageUrl?, description,
+  causes, symptoms, treatment`; `Disease.fromJson`.
+- `saved_scan.dart` + `saved_scan.g.dart` — Hive entity `SavedScan` (`plantName`, `causes`,
+  `symptoms`, `treatment`, `imageBytes` Uint8List?, `dateCreated` ISO-8601) +
+  hand-maintained `SavedScanAdapter` (typeId 0).
+- `scan_result.dart` — `{label, confidence}`.
 
-### `lib/ui/scan_page.dart` — core screen
-- The only place that touches the classifier, image picker, `image` decode, and the Hive save.
-- Hardcoded model/labels asset names (lines 18-19).
-- Force-unwraps the classifier result (line 91) — app would crash if model fails to load.
-- Threshold `0.95` hardcoded (line 358).
-- Label→catalog mapping is an `if/else` chain against uppercase strings (lines 380-391),
-  including the `'SHEALTH BLIGHT'` typo that matches the labels file.
-- `_saveData()` runs on every bookmark press even when un-bookmarking.
-- Synchronous `readAsBytesSync()` + `decodeImage` run on the UI isolate (jank risk).
-- 472 lines — the largest and most entangled file in the app.
+### `lib/data/repositories/*`
+- `disease_repository.dart` — loads `assets/disease_data.json`; `all`, `fallback` (id 0 =
+  "Fail to recognise", `modelName == null`), `byLabel` (case-insensitive), `matchByLabel`.
+- `scan_repository.dart` — thin wrapper over `Box<SavedScan>`: `scans`, `listenable`,
+  `add`, `deleteAt`.
+- `settings_repository.dart` — `ChangeNotifier` over SharedPreferences keys
+  `confidence_threshold` / `custom_model_path` / `custom_labels_path`; `confidenceThreshold`,
+  `customModelPath`, `customLabelsPath`, `hasCustomModel`; `setConfidenceThreshold` (0.50–1.00),
+  `saveCustomModel`/`saveCustomLabels` (copy into app docs dir), `resetCustomModel`
+  (delete copied files + clear keys).
 
-### `lib/classifier/*` — inference
-- `Classifier`: `loadWith` factory, `predict`, pre/post-processing, `close`.
-- Clean separation: preprocessing chain (crop → bilinear resize → normalize 127.5/127.5),
-  output as sorted `List<ClassifierCategory>`.
-- Sort comparator is a non-strict ordering `(b.score > a.score ? 1 : -1)`.
-- `ClassifierCategory` and `ClassifierModel` are simple value/holder types.
+### `lib/data/services/*`
+- `inference_service.dart` — `load()` (bundled asset) and `loadFromPath(modelFile,
+  labelsFile)` (user file). Both return `null` on failure, never throw. `predict(img)` via
+  crop → resize `inputShape[1]` → `NormalizeOp(127.5,127.5)` → top‑1. `labelCount`, `dispose`.
+  `_loadingLabels` strips the leading `"0 "` index.
+- `image_service.dart` — `pick(source)` via `image_picker`; `decode(file)` runs `img.decodeImage`
+  in `compute` (off the UI isolate).
 
-### `lib/models/*` — data
-- `Plant`: 6-entry static catalog, filtered by `getFavoritedPlants()`/`addedToCartPlants()`.
-- `Disease`: 7-entry static catalog with causes/symptoms/treatment copy; index 0 is the
-  "Fail to recognise" fallback.
-- `PlantDisease` + generated adapter: Hive entity for saved scans (text + `Uint8List?` image + date).
-- The two catalogs are **not aligned** (6 vs 7 entries; differing index→name maps) — the
-  biggest data-model hazard.
+### `lib/features/onboarding/*`
+- `splash_screen.dart` — 3 s splash → `pushReplacement` to onboarding (first run, `'repeat'`
+  null) or `RootPage`.
+- `onboarding_screen.dart` — 3-page intro (skip + next), sets `'repeat' = true`.
 
-### `lib/ui/screens/home_page.dart` — browsing
-- Banner + first catalog item + vertical list; toggles `isFavorated` in memory only.
+### `lib/features/shell/root_page.dart`
+- `IndexedStack` + fixed `BottomNavigationBar`, 4 tabs: Home / Scan / Saved / About.
+- Title = active tab label (default-txt 24); **gear** action pushes `SettingsPage`.
 
-### `lib/ui/screens/detail_page.dart` — plant detail
-- Reads `Plant.plantList` by `plantId`.
-- Favorite toggle is visually dead (the `onTap` pops instead of toggling; see lines 58-79).
-- Unused `PlantFeature` widget defined in the same file.
+### `lib/features/home/*`
+- `home_page.dart` — `ListView` + `SafeArea`, banner (`assets/images/banner.jpg`, radius 12,
+  height 160), "Healthy Rice plant" section (label `NORMAL RICE PLANT`) + "Rice Plant
+  Diseases" section.
+- `widgets/plant_card.dart` — white rounded card (radius 14), 84×84 rounded thumb (radius 12),
+  name + cleaned 3-line description snippet.
+- `disease_dialog.dart` — `Dialog` (radius 14, max height 75%) with full-bleed 200 px cover
+  image + dark gradient + top-close; disease **name in normal font** (primary bold);
+  scrollable cleaned description. (`detail_page.dart` was deleted.)
 
-### `lib/ui/screens/favorite_page.dart` — saved scans
-- Lists Hive `PlantDisease` rows; delete with confirm dialog; `FutureBuilder` on
-  re-opened box. `_truncateText` unused.
+### `lib/features/scan/*`
+- `scan_chooser_page.dart` — "Camera" / "Pick from Gallery" full-width `PrimaryButton`s.
+- `scan_page.dart` — `enum _ScanStatus { idle, analyzing, success, error }`; `_pickAndAnalyze`
+  → pick, decode (off-isolate), **≥3 s analysing animation** (`minDuration` `Duration(milliseconds: 3000)`),
+  `inference.predict` → `_resolveDisease` (threshold from `settings.confidenceThreshold`,
+  then `diseases.byLabel` or `fallback`) → `ResultView` (recognised, `modelName != null`) or
+  `UnrecognizedPanel`. `_saveScan` guarded by `_saved`; unrecognised scans store
+  `plantName: 'Unidentified'` + empty fields.
+- `widgets/analyzing_overlay.dart` — 2 px glow bar over the full-screen dark photo.
+- `widgets/result_view.dart` — hero card (92×92 rounded photo, name, accuracy chip) + sections
+  Description/Symptoms/Control-Interventions (bullets stripped, bold green labels).
+- `widgets/unrecognized_panel.dart` — full-height panel: hero card ("Unidentified" + chip
+  "Model confidence: X%"), tips list, "Try again"/"Another photo" buttons.
 
-### `lib/ui/screens/plant_description_page.dart` — saved detail + PDF
-- Full detail view of a saved scan; exports to PDF with `ArialUnicodeMS.ttf` fallback.
-- **Defines its own `Constants` class** (line 322) shadowing the global one.
+### `lib/features/saved/*`
+- `saved_page.dart` — `ValueListenableBuilder<Box<SavedScan>>`; white rounded cards (radius 14)
+  with 52×52 thumbnails, delete dialog (radius 16, red delete button, aligned end), tap →
+  `SavedDetailPage`.
+- `saved_detail_page.dart` — result-style hero (photo, name, `calendar_today` date chip),
+  sections with `_cleanText` (strip bullets), print button → 1-page PDF
+  (`ArialUnicodeMS.ttf` fallback) → `getTemporaryDirectory()/plant_description.pdf` → dialog
+  with "OK"/"Open File" (`open_file`).
 
-### `lib/ui/screens/profile_page.dart` — credits
-- Static capstone credit screen; no logic.
+### `lib/features/settings/settings_page.dart`
+- Threshold slider (`0.50–1.00`, 50 divisions) with live %; upload `.tflite`
+  (validate-with-reload then swap `AppDependencies.inference`), optional `.txt` labels
+  (copy + reload engine), **Reset to default model**; amber "Model requirements" note.
 
-### `lib/ui/screens/signin_page.dart` / `signup_page.dart` / `forgot_password.dart` — auth stubs
-- No validation, no state, no backend. Sign In just goes to `RootPage`. Unreachable in the
-  shipped flow (only a commented-out reference exists in onboarding).
+### `lib/features/about/about_page.dart`
+- "Work in progress" placeholder with `Icons.info_outline` (matches tab icon).
 
-### `lib/ui/screens/widgets/*`
-- `custom_textfield.dart`: used by auth screens.
-- `plant_photo_view.dart`: used by `ScanPage` (photo preview + empty state).
-- `plant_widget.dart`: **unused** (duplicates home list item UI).
-- `profile_widget.dart`: **unused**.
-
-### `lib/style/styles.dart` / `lib/constants.dart`
-- Design tokens (colors, fonts, text styles) and onboarding copy.
-- Many screens still hardcode `Color(0xff296e48)` / `Color(0xFFA7C1B4)` inline.
-
-### `lib/global/global.dart`
-- Single global `int id = 0`; imported by 3 files, read by none.
+### `lib/widgets/*`
+- `primary_button.dart`, `circle_icon_button.dart` — shared labeled/icon + round-icon buttons.
 
 ## Tests
 
-`test/widget_test.dart` cannot pass:
-
-- Imports `package:starter/main.dart` — the package is `RicePlantDiseaseDetection`, so the
-  import fails to resolve.
-- Asserts on a counter app (`Icons.add`, text `'0'`/`'1'`) that does not exist in `MyApp`.
-- No test files exist for the classifier, models, or any widget.
+`test/` has 4 real test files: `disease_repository_test.dart` (JSON→catalog, fallback,
+match), `scan_repository_test.dart` (Hive CRUD), `primary_button_test.dart`,
+`result_view_test.dart` (renders disease+sections). No test covers `InferenceService`
+(native lib) or `SettingsRepository` (platform plugin).
 
 ## Verification commands
 
-From repo root:
-
 ```powershell
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs   # regenerate hive adapter
 flutter analyze
 flutter test
 ```
-
-(Not executed here — the analysis in [[technical-debt]] is based on static review of the
-source as committed at `f0a9180`.)
 
 ## Cross-references
 

@@ -113,7 +113,12 @@
   (copy + reload engine), **Reset to default model**; amber "Model requirements" note.
 
 ### `lib/features/about/about_page.dart`
-- "Work in progress" placeholder with `Icons.info_outline` (matches tab icon).
+- Centered logo (`assets/images/rnsat_logo.png`, 100×100).
+- Centered description: AgriGuard is an AI-assisted mobile app for identifying rice
+  and corn diseases from leaf images, supporting informed crop-management decisions.
+- "Developer" section with the three team members (Lahaina G. Anggaboy,
+  Jay-em B. Delacruz, John Rey Lalic).
+- "Adviser" section with Ripple Jane H. Bato.
 
 ### `lib/widgets/*`
 - `primary_button.dart`, `circle_icon_button.dart` — shared labeled/icon + round-icon buttons.

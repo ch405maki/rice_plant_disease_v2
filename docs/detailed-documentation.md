@@ -166,10 +166,8 @@ with opacity — implemented with `TweenAnimationBuilder`-style paint layers.
 - `ThresholdCard`: slider `min 0.50 max 1.00 divisions 50`; % readout on the right.
 - `ModelCard`:
   - shows current model filename (or "default model") + number of classes;
-  - optional labels row;
   - `OutlinedButton.icon` "Upload model (.tflite)" → `FilePicker.platform.pickFiles(
     allowedExtensions: ['tflite'])`; validates via loadFromFile then saveCustomModel + swap;
-  - "Upload labels (.txt, optional)" → copies, persists, reloads active engine;
   - red "Reset to default model" → loads bundled defaults, `settings.resetCustomModel()`.
 - Amber "Model requirements" note: square input (usually 224/256), one label per line,
   labels in model output order, mismatch → unrecognised. All async ops gated with `_busy`.
@@ -190,3 +188,16 @@ with opacity — implemented with `TweenAnimationBuilder`-style paint layers.
   for all 4 ABIs (see T19 in [[technical-debt]]).
 - iOS scaffold provides `Info.plist` usage strings for `image_picker` (see
   [[permissions]]).
+
+## 12. About (`lib/features/about/about_page.dart`)
+
+Centered screen showing the app identity and team:
+
+- `assets/images/rnsat_logo.png` (100×100) centered at the top.
+- Centered description paragraph: AgriGuard is an AI-assisted mobile application
+  designed to help farmers quickly identify common rice and corn diseases using
+  leaf images, supporting timely and informed crop-management decisions.
+- "Developer" heading followed by three team members (Lahaina G. Anggaboy,
+  Jay-em B. Delacruz, John Rey Lalic).
+- "Adviser" heading followed by Ripple Jane H. Bato.
+- Matches the `Icons.info_outline` tab icon in the shell's About tab.

@@ -91,7 +91,7 @@ lib/
     saved/saved_page.dart          # list/delete saved scans
     saved/saved_detail_page.dart   # saved-scan detail + PDF export
     settings/settings_page.dart    # threshold slider + custom model/labels upload
-    about/about_page.dart          # WIP placeholder
+    about/about_page.dart          # centered logo, description, Developer & Adviser sections
   widgets/
     primary_button.dart            # reusable labeled/icon button
     circle_icon_button.dart        # reusable round icon button

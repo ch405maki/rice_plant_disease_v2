@@ -44,3 +44,9 @@ Record of project-specific decisions and the reasons behind them.
 
 - The home `DiseaseDialog` displays the disease name in the standard font (bold, primary green)
   rather than the display font (`SquadaOne`), per latest UI direction.
+
+## T8. Release APK named `AgriGuard.apk`
+
+- The release build output is renamed from `app-release.apk` to `AgriGuard.apk`
+  via `android/app/build.gradle` (`archivesBaseName = "AgriGuard"`), so the
+  delivered file carries the app's brand name.

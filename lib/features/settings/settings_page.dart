@@ -74,47 +74,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _showSnack('Model loaded (${candidate.labelCount} classes).');
   }
 
-  Future<void> _uploadLabels() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['txt'],
-    );
-    final path = result?.files.single.path;
-    if (result == null || path == null) return;
-
-    setState(() => _busy = true);
-    final saved =
-        await widget.dependencies.settings.saveCustomLabels(path);
-    if (saved == null) {
-      setState(() => _busy = false);
-      _showSnack('Could not save the labels file.', isError: true);
-      return;
-    }
-
-    // Reload whichever engine is active so the new labels take effect.
-    InferenceService? reloaded;
-    final settings = widget.dependencies.settings;
-    final modelPath = settings.customModelPath;
-    if (modelPath != null) {
-      reloaded = await InferenceService.loadFromFile(
-        modelFile: File(modelPath),
-        labelsFile: File(saved),
-      );
-    } else {
-      reloaded = await InferenceService.load(labelsFilePath: saved);
-    }
-
-    if (reloaded == null) {
-      setState(() => _busy = false);
-      _showSnack('Labels saved but the model could not reload.',
-          isError: true);
-      return;
-    }
-    _swapInference(reloaded);
-    setState(() => _busy = false);
-    _showSnack('Labels updated.');
-  }
-
   Future<void> _resetModel() async {
     setState(() => _busy = true);
     final defaults = await InferenceService.load();
@@ -266,25 +225,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
             ],
           ),
-          if (settings.customLabelsPath != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Labels: '
-              '${Uri.parse(settings.customLabelsPath!).pathSegments.last}',
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-          ],
           const SizedBox(height: 18),
           _uploadButton(
             icon: Icons.upload_file,
             label: 'Upload model (.tflite)',
             onTap: _busy ? null : _uploadModel,
-          ),
-          const SizedBox(height: 10),
-          _uploadButton(
-            icon: Icons.description_outlined,
-            label: 'Upload labels (.txt, optional)',
-            onTap: _busy ? null : _uploadLabels,
           ),
           const SizedBox(height: 10),
           SizedBox(

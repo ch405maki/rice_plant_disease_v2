@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
 
-/// Placeholder screen for the About tab while the content is in progress.
+/// About screen describing AgriGuard and its team.
 class AboutPage extends StatelessWidget {
   const AboutPage({Key? key}) : super(key: key);
 
@@ -14,35 +14,17 @@ class AboutPage extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
               children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppConstants.primaryColor.withOpacity(.12),
-                  ),
-                  child: const Icon(
-                    Icons.info_outline,
-                    size: 44,
-                    color: AppConstants.primaryColor,
-                  ),
-                ),
+                _buildLogo(),
                 const SizedBox(height: 24),
                 const Text(
-                  'Work in progress',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'This page is under development.\nPlease check back soon.',
+                  'AgriGuard is an AI-assisted mobile application designed to '
+                  'help farmers quickly identify common rice and corn diseases '
+                  'using leaf images. By providing an accessible way to detect '
+                  'possible diseases, AgriGuard supports farmers in making '
+                  'timely and informed crop-management decisions.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -50,11 +32,61 @@ class AboutPage extends StatelessWidget {
                     color: Colors.black54,
                   ),
                 ),
+                const SizedBox(height: 32),
+                _buildTeamSection(
+                  title: 'Developer',
+                  members: const [
+                    'Lahaina G. Anggaboy',
+                    'Jay-em B. Delacruz',
+                    'John Rey Lalic',
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildTeamSection(
+                  title: 'Adviser',
+                  members: const ['Ripple Jane H. Bato'],
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Image.asset(
+      'assets/images/rnsat_logo.png',
+      width: 100,
+      height: 100,
+    );
+  }
+
+  Widget _buildTeamSection({
+    required String title,
+    required List<String> members,
+  }) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppConstants.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        for (final m in members)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Text(
+              m,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -18,8 +18,6 @@ Gear icon (`Icons.settings_outlined`) in the shell AppBar actions → pushes `Se
 - **Upload model (.tflite)**: pick → `InferenceService.loadFromFile` (validates by building the
   interpreter) → `SettingsRepository.saveCustomModel` (copies file into app documents dir,
   persists path) → swap `AppDependencies.inference` (dispose old).
-- **Upload labels (.txt, optional)**: copy + persist; reload the active engine with new labels
-  (`loadFromFile` with labels, or bundled `load(labelsFilePath:)` if no custom model).
 - **Reset to default**: delete copied files, clear prefs, reload bundled engine.
 - **Model requirements** amber note: tflite classification format, square input, label ordering,
   and the "unidentified" warning.

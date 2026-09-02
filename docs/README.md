@@ -39,5 +39,5 @@
   `'repeat'`, settings keys `confidence_threshold`, `custom_model_path`, `custom_labels_path`).
 - **Inference**: on-device only; no network, no auth. Threshold is user-configurable
   (0.50–1.00, default 0.95). Minimum analysing animation 3 s.
-- **Tests**: 4 real test files pass; `flutter analyze` clean. No tests cover the native
-  inference or platform plugins.
+- **Tests**: 4 real test files pass; `flutter analyze` clean. Release APK
+  is named `AgriGuard.apk` (`android/app/build.gradle`).

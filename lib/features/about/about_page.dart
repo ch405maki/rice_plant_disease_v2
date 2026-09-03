@@ -21,7 +21,7 @@ class AboutPage extends StatelessWidget {
                 const SizedBox(height: 24),
                 const Text(
                   'AgriGuard is an AI-assisted mobile application designed to '
-                  'help farmers quickly identify common rice and corn diseases '
+                  'help farmers quickly identify common rice diseases '
                   'using leaf images. By providing an accessible way to detect '
                   'possible diseases, AgriGuard supports farmers in making '
                   'timely and informed crop-management decisions.',

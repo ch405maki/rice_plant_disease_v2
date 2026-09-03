@@ -195,7 +195,7 @@ Centered screen showing the app identity and team:
 
 - `assets/images/rnsat_logo.png` (100×100) centered at the top.
 - Centered description paragraph: AgriGuard is an AI-assisted mobile application
-  designed to help farmers quickly identify common rice and corn diseases using
+  designed to help farmers quickly identify common rice diseases using
   leaf images, supporting timely and informed crop-management decisions.
 - "Developer" heading followed by three team members (Lahaina G. Anggaboy,
   Jay-em B. Delacruz, John Rey Lalic).

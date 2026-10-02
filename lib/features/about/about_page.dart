@@ -34,17 +34,20 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 _buildTeamSection(
-                  title: 'Developer',
+                  title: 'Developers',
                   members: const [
-                    'Lahaina G. Anggaboy',
-                    'Jay-em B. Delacruz',
-                    'John Rey Lalic',
+                    _TeamMember(
+                      'Lahaina G. Anggaboy',
+                      'assets/images/lahaina.jpg',
+                    ),
+                    _TeamMember('Jay-em B. Delacruz', 'assets/images/jay.jpg'),
+                    _TeamMember('John Rey Lalic', 'assets/images/jhon.jpg'),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _buildTeamSection(
                   title: 'Adviser',
-                  members: const ['Ripple Jane H. Bato'],
+                  members: const [_TeamMember('Ripple Jane H. Bato')],
                 ),
               ],
             ),
@@ -64,7 +67,7 @@ class AboutPage extends StatelessWidget {
 
   Widget _buildTeamSection({
     required String title,
-    required List<String> members,
+    required List<_TeamMember> members,
   }) {
     return Column(
       children: [
@@ -76,17 +79,59 @@ class AboutPage extends StatelessWidget {
             color: AppConstants.primaryColor,
           ),
         ),
-        const SizedBox(height: 4),
-        for (final m in members)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Text(
-              m,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
+        const SizedBox(height: 12),
+        if (members.length == 1)
+          _buildMember(members.first)
+        else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final m in members.take(2))
+                Expanded(child: Center(child: _buildMember(m))),
+            ],
           ),
+          for (final m in members.skip(2))
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: _buildMember(m),
+            ),
+        ],
       ],
     );
   }
+
+  Widget _buildMember(_TeamMember member) {
+    return Column(
+      children: [
+        if (member.imageAsset != null) ...[
+          _buildAvatar(member.imageAsset!),
+          const SizedBox(height: 6),
+        ],
+        Text(
+          member.name,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvatar(String assetPath) {
+    return ClipOval(
+      child: Image.asset(
+        assetPath,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+}
+
+/// A team member with an optional profile photo shown above the name.
+class _TeamMember {
+  const _TeamMember(this.name, [this.imageAsset]);
+
+  final String name;
+  final String? imageAsset;
 }
